@@ -1,0 +1,14 @@
+name: KickFromClaim
+version: '${project.version}'
+main: es.mithrandircraft.kickfromclaim.kickfromclaim.KickFromClaim
+api-version: 1.17
+authors: [ __Mithrandir__ ]
+depend: [GriefPrevention]
+description: Kicks players and pets from GriefPrevention claims
+website: www.mithrandircraft.es
+commands:
+  ClaimKick:
+    description: Kickea a un/a jugador/a o mascota de tu claim.
+    aliases:
+    - ck
+    - kfc

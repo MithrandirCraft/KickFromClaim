@@ -1,0 +1,4 @@
+MaxCircleIterations: 10
+CheckLocationsPerCircumference: 3
+MaxSafeLocationFailures: 5
+SendToSpawnInstead: false
