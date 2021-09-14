@@ -1,4 +1,4 @@
-package es.mithrandircraft.kickfromclaim.kickfromclaim;
+package es.mithrandircraft.kickfromclaim;
 
 import org.bukkit.entity.Player;
 

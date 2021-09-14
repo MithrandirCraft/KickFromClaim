@@ -2,7 +2,7 @@
 // Copyright © Dylan Calaf Latham KickFromClaim
 //--------------------------------------------------------------------
 
-package es.mithrandircraft.kickfromclaim.kickfromclaim;
+package es.mithrandircraft.kickfromclaim;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;

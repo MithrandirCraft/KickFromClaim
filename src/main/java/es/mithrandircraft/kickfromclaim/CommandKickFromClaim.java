@@ -2,7 +2,7 @@
 // Copyright © Dylan Calaf Latham KickFromClaim
 //--------------------------------------------------------------------
 
-package es.mithrandircraft.kickfromclaim.kickfromclaim;
+package es.mithrandircraft.kickfromclaim;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -55,21 +55,23 @@ public class CommandKickFromClaim implements CommandExecutor {
                         {
                             if(!mainClassAccess.getConfig().getBoolean("SendToSpawnInstead"))
                             {
-                                //Expell through "iterative circumferences" method
-                                Location randomCircumferenceRadiusLoc = null;
-
-                                randomCircumferenceRadiusLoc = IterateCircumferences(dataStore, player.getLocation(), claim.getGreaterBoundaryCorner().getWorld());
-
-                                if(randomCircumferenceRadiusLoc == null)
+                                //Expel through "iterative circumferences" method
+                                Bukkit.getScheduler().runTaskAsynchronously(mainClassAccess, () -> IterateCircumferences(dataStore, player.getLocation(), claim.getGreaterBoundaryCorner().getWorld(), new CallbackReturnLocation()
                                 {
-                                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("LocationNotFound")));
-                                }
-                                else
-                                {
-                                    expelledPlayer.teleport(randomCircumferenceRadiusLoc);
-                                    expelledPlayer.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + PlaceholderManager.SubstituteExpulsor(LocaleManager.get().getString("Kicked"), player.getName())));
-                                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("SuccessfulKick")));
-                                }
+                                    @Override
+                                    public void onDone(Location randomCircumferenceRadiusLoc){
+                                        if(randomCircumferenceRadiusLoc == null)
+                                        {
+                                            player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("LocationNotFound")));
+                                        }
+                                        else
+                                        {
+                                            expelledPlayer.teleport(randomCircumferenceRadiusLoc);
+                                            expelledPlayer.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + PlaceholderManager.SubstituteExpulsor(LocaleManager.get().getString("Kicked"), player.getName())));
+                                            player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("SuccessfulKick")));
+                                        }
+                                    }
+                                }));
                             }
                             else
                             {
@@ -100,40 +102,50 @@ public class CommandKickFromClaim implements CommandExecutor {
         return false;
     }
 
-    /**Returns "safe" location outside a claim if found, if not found returns null (Uses expanding iterating circumferences method)*/
-    private Location IterateCircumferences(DataStore dataStore, Location circumferenceCenter, World circumferenceWorld)
+    /**Run asynchronously, callback returns "safe" location outside a claim if found, if not found returns null (Uses expanding iterating circumferences method)*/
+    private void IterateCircumferences(DataStore dataStore, Location circumferenceCenter, World circumferenceWorld, CallbackReturnLocation callback)
     {
         int circumferenceRadius = 10;
-        Location randomCircumferenceRadiusLoc;
+        Location randomCircumferenceRadiusLoc = null;
         int maxCircleIterations = mainClassAccess.getConfig().getInt("MaxCircleIterations");
         int checkLocationsPerCircumference = mainClassAccess.getConfig().getInt("CheckLocationsPerCircumference");
         int maxSafeLocationFailures = mainClassAccess.getConfig().getInt("MaxSafeLocationFailures");
-
         int safeLocationChecks = 0;
         for(int i = 0; i < maxCircleIterations; i++) //Circle radius iteration
         {
             circumferenceRadius *= 2;
 
-            for(int j = 0; j < checkLocationsPerCircumference; j++) //Circunference position + check within claim
+            for(int j = 0; j < checkLocationsPerCircumference; j++) //Circumference position + check within claim
             {
                 randomCircumferenceRadiusLoc = GetRandomCircumferenceLoc(circumferenceCenter, circumferenceRadius, circumferenceWorld);
                 if(dataStore.getClaimAt(randomCircumferenceRadiusLoc, true, null) == null)
+                {
                     safeLocationChecks++;
-                    if(SafeLocationCheck.IsSafeLocation(randomCircumferenceRadiusLoc)) return randomCircumferenceRadiusLoc;
-                    else if(!(safeLocationChecks >= maxSafeLocationFailures)) j = 0;
+                    if(SafeLocationCheck.IsSafeLocation(randomCircumferenceRadiusLoc)) break;
+                    else if(!(safeLocationChecks >= maxSafeLocationFailures)) j = 0; //Reset circumference position search unless it's the last safe check
+                }
             }
+
+            if(i == maxCircleIterations - 1) randomCircumferenceRadiusLoc = null; //Last iteration and no appropriate position found
         }
 
-        return null;
+        Location finalRandomCircumferenceRadiusLoc = randomCircumferenceRadiusLoc;
+        Bukkit.getScheduler().runTask(mainClassAccess, new Runnable() { //Callback to main thread
+            @Override
+            public void run() {
+                callback.onDone(finalRandomCircumferenceRadiusLoc);
+            }
+        });
     }
 
     private Location GetRandomCircumferenceLoc(Location circumferenceCenter, int circumferenceRadius, World circumferenceWorld)
     {
         double randomAngle = Math.random()*Math.PI*2;
         return new Location(circumferenceWorld,
-        circumferenceCenter.getX() + (Math.cos(randomAngle) * circumferenceRadius),
+        circumferenceCenter.getX() + (Math.cos(randomAngle) * (double)circumferenceRadius),
         70,
-        circumferenceCenter.getZ() + (Math.sin(randomAngle) * circumferenceRadius));
+        circumferenceCenter.getZ() + (Math.sin(randomAngle) * (double)circumferenceRadius)
+        );
     }
 
     private void AddCooldown(Player player)
