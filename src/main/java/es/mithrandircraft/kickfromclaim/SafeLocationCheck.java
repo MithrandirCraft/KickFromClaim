@@ -1,26 +1,21 @@
 package es.mithrandircraft.kickfromclaim;
 
-import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
 public class SafeLocationCheck {
     /**
-     * Checks if a location is safe (solid ground with 2 breathable blocks)
+     * Checks if a block is safe to be on (solid with 2 breathable blocks above)
      *
-     * @param location Location to check
-     * @return True if location is safe
+     * @param block Location to check
+     * @return True if block is safe
      */
-    public static boolean IsSafeLocation(Location location) {
-        Block feet = location.getBlock();
-        if (!feet.getType().isSolid()) {
-            return false; // solid (will suffocate)
-        }
+    public static boolean BlockSafetyCheck(Block block) {
+        Block feet = block.getRelative(BlockFace.UP);
+        if (feet.isSolid()) return false; //Solid (will suffocate)
         Block head = feet.getRelative(BlockFace.UP);
-        if (head.getType().isSolid()) {
-            return false; // solid (will suffocate)
-        }
-        Block ground = feet.getRelative(BlockFace.DOWN);
-        return ground.getType().isSolid(); // not solid
+        if (head.isSolid()) return false; //Solid (will suffocate)
+        //Final check, base block is solid?
+        return block.isSolid();
     }
 }

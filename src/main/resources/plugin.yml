@@ -1,6 +1,6 @@
 name: KickFromClaim
 version: '${project.version}'
-main: es.mithrandircraft.kickfromclaim.kickfromclaim.KickFromClaim
+main: es.mithrandircraft.kickfromclaim.KickFromClaim
 api-version: 1.17
 authors: [ __Mithrandir__ ]
 depend: [GriefPrevention]

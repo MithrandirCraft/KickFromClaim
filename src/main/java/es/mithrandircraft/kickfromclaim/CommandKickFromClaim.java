@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -66,7 +67,7 @@ public class CommandKickFromClaim implements CommandExecutor {
                                         }
                                         else
                                         {
-                                            expelledPlayer.teleport(randomCircumferenceRadiusLoc);
+                                            expelledPlayer.teleportAsync(randomCircumferenceRadiusLoc);
                                             expelledPlayer.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + PlaceholderManager.SubstituteExpulsor(LocaleManager.get().getString("Kicked"), player.getName())));
                                             player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("SuccessfulKick")));
                                         }
@@ -102,7 +103,7 @@ public class CommandKickFromClaim implements CommandExecutor {
         return false;
     }
 
-    /**Run asynchronously, callback returns "safe" location outside a claim if found, if not found returns null (Uses expanding iterating circumferences method)*/
+    /**[Run asynchronously] Callback returns "safe" location outside a claim if found, if not found returns null (Uses expanding iterating circumferences method)*/
     private void IterateCircumferences(DataStore dataStore, Location circumferenceCenter, World circumferenceWorld, CallbackReturnLocation callback)
     {
         int circumferenceRadius = 10;
@@ -111,17 +112,23 @@ public class CommandKickFromClaim implements CommandExecutor {
         int checkLocationsPerCircumference = mainClassAccess.getConfig().getInt("CheckLocationsPerCircumference");
         int maxSafeLocationFailures = mainClassAccess.getConfig().getInt("MaxSafeLocationFailures");
         int safeLocationChecks = 0;
-        for(int i = 0; i < maxCircleIterations; i++) //Circle radius iteration
+        outer: for(int i = 0; i < maxCircleIterations; i++) //Circle radius iteration
         {
             circumferenceRadius *= 2;
 
             for(int j = 0; j < checkLocationsPerCircumference; j++) //Circumference position + check within claim
             {
                 randomCircumferenceRadiusLoc = GetRandomCircumferenceLoc(circumferenceCenter, circumferenceRadius, circumferenceWorld);
+                System.out.println(dataStore.getClaimAt(randomCircumferenceRadiusLoc, true, null));
                 if(dataStore.getClaimAt(randomCircumferenceRadiusLoc, true, null) == null)
                 {
                     safeLocationChecks++;
-                    if(SafeLocationCheck.IsSafeLocation(randomCircumferenceRadiusLoc)) break;
+                    Block highestBlock = circumferenceWorld.getHighestBlockAt(randomCircumferenceRadiusLoc);
+                    if(SafeLocationCheck.BlockSafetyCheck(highestBlock))
+                    {
+                        randomCircumferenceRadiusLoc = new Location(circumferenceWorld, highestBlock.getX() + 0.5, highestBlock.getY() + 1, highestBlock.getZ() + 0.5);
+                        break outer;
+                    }
                     else if(!(safeLocationChecks >= maxSafeLocationFailures)) j = 0; //Reset circumference position search unless it's the last safe check
                 }
             }
@@ -138,12 +145,13 @@ public class CommandKickFromClaim implements CommandExecutor {
         });
     }
 
+    /**Returns a random Location from a circumference of circumferenceRadius and circunferenceCenter*/
     private Location GetRandomCircumferenceLoc(Location circumferenceCenter, int circumferenceRadius, World circumferenceWorld)
     {
         double randomAngle = Math.random()*Math.PI*2;
         return new Location(circumferenceWorld,
         circumferenceCenter.getX() + (Math.cos(randomAngle) * (double)circumferenceRadius),
-        70,
+        0,
         circumferenceCenter.getZ() + (Math.sin(randomAngle) * (double)circumferenceRadius)
         );
     }
