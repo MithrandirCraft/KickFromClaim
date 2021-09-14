@@ -21,11 +21,15 @@ class LocaleManager {
         //Messages prefix:
         localeConfiguration.addDefault("MessagesPrefix","&b[&aClaimKick&b] ");
 
-        localeConfiguration.addDefault("LocationNotFound","&aNo fue posible encontrar una localización de expulsión fuera de claims, o las existentes no eran seguras.");
+        localeConfiguration.addDefault("KickCommandCooldown","&aSolo puedes usar este comando una vez cada 5 segundos.");
+
+        localeConfiguration.addDefault("LocationNotFound","&aNo fue posible calcular una localización de expulsión fuera de claims, o las encontradas no eran seguras. Intentalo de nuevo!");
         localeConfiguration.addDefault("PlayerNotInYourClaim","&aEl/la jugador/a especificado no se encuentra en ninguno de tus claims.");
         localeConfiguration.addDefault("PlayerOffline","&aEl/la jugador/a especificado no está conectad@.");
 
         localeConfiguration.addDefault("SuccessfulKick","&aEl/la jugador/a especificado ha sido expulsad@ de tu claim.");
+        localeConfiguration.addDefault("Kicked","&aHas sido expulsad@ de un claim de {Expulsor}");
+
 
 
     }

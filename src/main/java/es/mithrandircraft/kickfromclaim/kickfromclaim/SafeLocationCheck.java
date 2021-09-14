@@ -13,7 +13,7 @@ public class SafeLocationCheck {
      */
     public static boolean IsSafeLocation(Location location) {
         Block feet = location.getBlock();
-        if (!feet.getType().isSolid() && !feet.getLocation().add(0, 1, 0).getBlock().getType().isSolid()) {
+        if (!feet.getType().isSolid()) {
             return false; // solid (will suffocate)
         }
         Block head = feet.getRelative(BlockFace.UP);
@@ -21,9 +21,6 @@ public class SafeLocationCheck {
             return false; // solid (will suffocate)
         }
         Block ground = feet.getRelative(BlockFace.DOWN);
-        if (!ground.getType().isSolid()) {
-            return false; // not solid
-        }
-        return true;
+        return ground.getType().isSolid(); // not solid
     }
 }

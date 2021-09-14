@@ -17,61 +17,84 @@ import me.ryanhamshire.GriefPrevention.DataStore;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import org.bukkit.entity.Player;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class CommandKickFromClaim implements CommandExecutor {
 
     private final KickFromClaim mainClassAccess;
 
-    public CommandKickFromClaim(KickFromClaim main) { this.mainClassAccess = main; }
+    Map<Player, CommandKickFromClaimCooldownObject> kfcCommandPerPlayerCooldowns;
+
+    public CommandKickFromClaim(KickFromClaim main)
+    {
+        this.mainClassAccess = main;
+        kfcCommandPerPlayerCooldowns = new HashMap<>();
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
     {
         if (sender instanceof Player) //Is player
         {
-            final DataStore dataStore = GriefPrevention.instance.dataStore;
-
             Player player = (Player) sender; //Kick soliciting player
 
-            if(args.length == 1) //Specifies player
+            if(!HasCooldown(player))
             {
-                Player expelledPlayer = Bukkit.getPlayer(args[0]); //Target player to be expelled
-                if(expelledPlayer != null)
-                {
-                    Location playerToExpellLocation = expelledPlayer.getLocation();
-                    Claim claim = dataStore.getClaimAt(playerToExpellLocation, true, null);
-                    if(claim != null && claim.ownerID.equals(player.getUniqueId())) //Target is in a claim + claim is solicitor's
-                    {
-                        if(!mainClassAccess.getConfig().getBoolean("SendToSpawnInstead"))
-                        {
-                            //Expell through "iterative circumferences" method
-                            Location randomCircumferenceRadiusLoc = null;
-                            randomCircumferenceRadiusLoc = IterateCircumferences(dataStore, player.getLocation(), claim.getGreaterBoundaryCorner().getWorld());
+                AddCooldown(player);
+                final DataStore dataStore = GriefPrevention.instance.dataStore;
 
-                            if(randomCircumferenceRadiusLoc == null)
+                if(args.length == 1) //Specifies player
+                {
+                    Player expelledPlayer = Bukkit.getPlayer(args[0]); //Target player to be expelled
+                    if(expelledPlayer != null)
+                    {
+                        Location playerToExpellLocation = expelledPlayer.getLocation();
+                        Claim claim = dataStore.getClaimAt(playerToExpellLocation, true, null);
+                        if(claim != null && claim.ownerID.equals(player.getUniqueId())) //Target is in a claim + claim is solicitor's
+                        {
+                            if(!mainClassAccess.getConfig().getBoolean("SendToSpawnInstead"))
                             {
-                                player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("LocationNotFound")));
+                                //Expell through "iterative circumferences" method
+                                Location randomCircumferenceRadiusLoc = null;
+
+                                randomCircumferenceRadiusLoc = IterateCircumferences(dataStore, player.getLocation(), claim.getGreaterBoundaryCorner().getWorld());
+
+                                if(randomCircumferenceRadiusLoc == null)
+                                {
+                                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("LocationNotFound")));
+                                }
+                                else
+                                {
+                                    expelledPlayer.teleport(randomCircumferenceRadiusLoc);
+                                    expelledPlayer.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + PlaceholderManager.SubstituteExpulsor(LocaleManager.get().getString("Kicked"), player.getName())));
+                                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("SuccessfulKick")));
+                                }
                             }
                             else
                             {
-                                expelledPlayer.teleport(randomCircumferenceRadiusLoc);
+                                //Expel through "send to spawn" method
+                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "spawn " + player.getName());
                                 player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("SuccessfulKick")));
                             }
                         }
                         else
                         {
-                            //Expel through "send to spawn" method
-                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "spawn " + player.getName());
-                            player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("SuccessfulKick")));
+                            player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("PlayerNotInYourClaim")));
                         }
                     }
                 }
-            }
-            /*
-            else if(Check mascot is being looked at) //Mascot being looked at
-            {
+                /*
+                else if(Check mascot is being looked at) //Mascot being looked at
+                {
 
+                }
+                */
             }
-            */
+            else
+            {
+                player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("KickCommandCooldown")));
+            }
         }
 
         return false;
@@ -111,5 +134,19 @@ public class CommandKickFromClaim implements CommandExecutor {
         circumferenceCenter.getX() + (Math.cos(randomAngle) * circumferenceRadius),
         70,
         circumferenceCenter.getZ() + (Math.sin(randomAngle) * circumferenceRadius));
+    }
+
+    private void AddCooldown(Player player)
+    {
+        kfcCommandPerPlayerCooldowns.put(player, new CommandKickFromClaimCooldownObject(mainClassAccess, this, player));
+    }
+    protected void RemoveCooldown(Player player)
+    {
+        kfcCommandPerPlayerCooldowns.remove(player);
+    }
+    /**Returns true if command is in cooldown for player, else returns false*/
+    private boolean HasCooldown(Player player)
+    {
+        return kfcCommandPerPlayerCooldowns.get(player) != null;
     }
 }

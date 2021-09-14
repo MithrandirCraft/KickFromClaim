@@ -1,4 +1,5 @@
 MaxCircleIterations: 10
 CheckLocationsPerCircumference: 3
 MaxSafeLocationFailures: 5
+CommandCooldownSeconds: 5
 SendToSpawnInstead: false
