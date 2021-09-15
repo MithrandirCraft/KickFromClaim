@@ -1,48 +1,41 @@
-//--------------------------------------------------------------------
-// Copyright © Dylan Calaf Latham KickFromClaim
-//--------------------------------------------------------------------
-
 package es.mithrandircraft.kickfromclaim;
-
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 
 import me.ryanhamshire.GriefPrevention.Claim;
 import me.ryanhamshire.GriefPrevention.DataStore;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
-
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.entity.*;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 
-import java.util.List;
-
-public class CommandKickFromClaim implements CommandExecutor {
+public class EventPlayerInteractEntity implements Listener {
 
     private final KickFromClaim mainClassAccess;
 
-    public CommandKickFromClaim(KickFromClaim main) { this.mainClassAccess = main; }
+    public EventPlayerInteractEntity(KickFromClaim main) { this.mainClassAccess = main; }
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
+    @EventHandler
+    public void PlayerInteractEntityEvent(PlayerInteractEntityEvent e)
     {
-        if (sender instanceof Player) //Is player
-        {
-            Player player = (Player) sender; //Soliciting player
-            String playerUUID = player.getUniqueId().toString();
+        Player player = e.getPlayer();
+        String playerUUID = player.getUniqueId().toString();
 
+        if(mainClassAccess.CheckPlayerInInteractKickMode(playerUUID))
+        {
             if(!mainClassAccess.HasCooldown(playerUUID))
             {
-                if(args.length == 1) //Kick specified player
-                {
-                    mainClassAccess.AddCooldown(playerUUID);
+                mainClassAccess.AddCooldown(playerUUID);
+                Entity entity = e.getRightClicked();
 
-                    Player expelledPlayer = Bukkit.getPlayer(args[0]); //Target player to be expelled
-                    if(expelledPlayer != null)
+                if(entity instanceof LivingEntity)
+                {
+                    final DataStore dataStore = GriefPrevention.instance.dataStore;
+                    if(entity instanceof Player) //Attempting to kick a player
                     {
-                        final DataStore dataStore = GriefPrevention.instance.dataStore;
+                        Player expelledPlayer = (Player)entity; //Target player to be expelled
                         Location playerToExpelLocation = expelledPlayer.getLocation();
                         Claim claim = dataStore.getClaimAt(playerToExpelLocation, true, null);
                         if(claim != null && claim.ownerID.equals(player.getUniqueId())) //Target is in a claim + claim is solicitor's
@@ -79,18 +72,33 @@ public class CommandKickFromClaim implements CommandExecutor {
                             player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("PlayerNotInYourClaim")));
                         }
                     }
-                }
-                else if(args.length == 0) //Toggle interact kick mode
-                {
-                    if(mainClassAccess.CheckPlayerInInteractKickMode(playerUUID))
+                    else //Attempting to kick a mob or animal
                     {
-                        mainClassAccess.RemovePlayerFromInteractKickMode(playerUUID);
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("ExitedInteractKickMode")));
-                    }
-                    else
-                    {
-                        mainClassAccess.SetPlayerInInteractKickMode(playerUUID);
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("EnteredInteractKickMode")));
+                        Location animalOrMobToExpellLocation = entity.getLocation();
+                        Claim claim = dataStore.getClaimAt(animalOrMobToExpellLocation, true, null);
+                        if(claim != null && claim.ownerID.equals(player.getUniqueId())) //Target is in a claim + claim is solicitor's
+                        {
+                            //Expel through "expanding iterating circumferences" method
+                            Bukkit.getScheduler().runTaskAsynchronously(mainClassAccess, () -> LocationFinder.IterateCircumferences(mainClassAccess, dataStore, player.getLocation(), claim.getGreaterBoundaryCorner().getWorld(), new CallbackReturnLocation()
+                            {
+                                @Override
+                                public void onDone(Location randomCircumferenceRadiusLoc){
+                                    if(randomCircumferenceRadiusLoc == null)
+                                    {
+                                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("LocationNotFound")));
+                                    }
+                                    else
+                                    {
+                                        entity.teleportAsync(randomCircumferenceRadiusLoc);
+                                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("SuccessfulKickAnimalOrMob")));
+                                    }
+                                }
+                            }));
+                        }
+                        else
+                        {
+                            player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("AnimalOrMobNotInYourClaim")));
+                        }
                     }
                 }
             }
@@ -99,7 +107,5 @@ public class CommandKickFromClaim implements CommandExecutor {
                 player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("KickCooldown")));
             }
         }
-
-        return false;
     }
 }

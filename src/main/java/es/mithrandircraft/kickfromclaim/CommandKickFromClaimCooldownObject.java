@@ -1,12 +1,10 @@
 package es.mithrandircraft.kickfromclaim;
 
-import org.bukkit.entity.Player;
-
 public class CommandKickFromClaimCooldownObject {
-    CommandKickFromClaimCooldownObject(KickFromClaim mainClass, CommandKickFromClaim kfc, Player player){
+    CommandKickFromClaimCooldownObject(KickFromClaim mainClass, String playerUUID){
         mainClass.getServer().getScheduler().scheduleSyncDelayedTask(mainClass, new Runnable() {
             public void run() {
-                kfc.RemoveCooldown(player);
+                mainClass.RemoveCooldown(playerUUID);
             }
         }, mainClass.getConfig().getInt("CommandCooldownSeconds") * 20L);
     }

@@ -21,17 +21,22 @@ class LocaleManager {
         //Messages prefix:
         localeConfiguration.addDefault("MessagesPrefix","&b[&aClaimKick&b] ");
 
-        localeConfiguration.addDefault("KickCommandCooldown","&aSolo puedes usar este comando una vez cada 5 segundos.");
+        localeConfiguration.addDefault("KickCooldown","&4Solo puedes expulsar jugadores/as y mascotas una vez cada 5 segundos.");
 
-        localeConfiguration.addDefault("LocationNotFound","&aNo fue posible calcular una localización de expulsión fuera de claims, o las encontradas no eran seguras. Intentalo de nuevo!");
-        localeConfiguration.addDefault("PlayerNotInYourClaim","&aEl/la jugador/a especificado no se encuentra en ninguno de tus claims.");
-        localeConfiguration.addDefault("PlayerOffline","&aEl/la jugador/a especificado no está conectad@.");
+        localeConfiguration.addDefault("LocationNotFound","&4No fue posible calcular una localización de expulsión fuera de claims, o las encontradas no eran seguras. Intentalo de nuevo!");
+        localeConfiguration.addDefault("PlayerNotInYourClaim","&4El/la jugador/a especificado no se encuentra en ninguno de tus claims.");
+        localeConfiguration.addDefault("PlayerOffline","&4El/la jugador/a especificado no está conectad@.");
 
-        localeConfiguration.addDefault("SuccessfulKick","&aEl/la jugador/a especificado ha sido expulsad@ de tu claim.");
-        localeConfiguration.addDefault("Kicked","&aHas sido expulsad@ de un claim de {Expulsor}");
+        localeConfiguration.addDefault("SuccessfulKick","&aEl/la jugador/a especificado ha sido expulsad@ de tu/s claim/s. Utiliza &e/setclaimflag noenterplayer <nombreDeJugador/a> &asi no quieres que vuelva a entrar.");
+        localeConfiguration.addDefault("Kicked","&4Has sido expulsad@ de un claim de {Expulsor}");
 
+        localeConfiguration.addDefault("EnteredInteractKickMode","&aEntraste en modo expulsión. Haz click derecho sobre jugadores/as o mascotas que quieras expulsar de tu claim. Sal del modo expulsión utilizando &e/ck, kfc, kickfromclaim &ade nuevo");
+        localeConfiguration.addDefault("ExitedInteractKickMode","&4Saliste del modo expulsión.");
 
+        localeConfiguration.addDefault("AnimalOrMobNotInYourClaim","&4Animal o mob no se encuentra en tu claim.");
+        localeConfiguration.addDefault("InvalidInteractionExpulsionEntity","&4Intentaste expulsar a una entidad invalida, solo es posible expulsar Animales o Mobs. Sal del modo expulsión utilizando &e/ck, kfc, kickfromclaim &ade nuevo");
 
+        localeConfiguration.addDefault("SuccessfulKickAnimalOrMob","&aAnimal o mob expulsados de tu claim.");
     }
 
     public static void setup(String pluginName) //Finds or generates custom config file
