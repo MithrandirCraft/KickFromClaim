@@ -101,6 +101,10 @@ public class EventPlayerInteractEntity implements Listener {
                         }
                     }
                 }
+                else
+                {
+                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("InvalidInteractionExpulsionEntity")));
+                }
             }
             else
             {
