@@ -40,7 +40,7 @@ public class CommandKickFromClaim implements CommandExecutor {
                     mainClassAccess.AddCooldown(playerUUID);
 
                     Player expelledPlayer = Bukkit.getPlayer(args[0]); //Target player to be expelled
-                    if(expelledPlayer != null)
+                    if(expelledPlayer != null && !expelledPlayer.hasPermission("ClaimKick.Exempt"))
                     {
                         final DataStore dataStore = GriefPrevention.instance.dataStore;
                         Location playerToExpelLocation = expelledPlayer.getLocation();
