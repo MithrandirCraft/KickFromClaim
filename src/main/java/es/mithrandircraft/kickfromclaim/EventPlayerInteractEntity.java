@@ -10,6 +10,7 @@ import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.inventory.EquipmentSlot;
 
 public class EventPlayerInteractEntity implements Listener {
 
@@ -20,6 +21,8 @@ public class EventPlayerInteractEntity implements Listener {
     @EventHandler
     public void PlayerInteractEntityEvent(PlayerInteractEntityEvent e)
     {
+        if(!e.getHand().equals(EquipmentSlot.HAND)) return;
+
         Player player = e.getPlayer();
         String playerUUID = player.getUniqueId().toString();
 
@@ -36,10 +39,36 @@ public class EventPlayerInteractEntity implements Listener {
                     if(entity instanceof Player) //Attempting to kick a player
                     {
                         Player expelledPlayer = (Player)entity; //Target player to be expelled
+                        if(expelledPlayer.hasPermission("ClaimKick.Exempt")) return;
+
                         Location playerToExpelLocation = expelledPlayer.getLocation();
                         Claim claim = dataStore.getClaimAt(playerToExpelLocation, true, null);
-                        if(claim != null && claim.ownerID.equals(player.getUniqueId())) //Target is in a claim + claim is solicitor's
+                        if(claim != null) //Target is in a claim
                         {
+                            boolean solicitorIsClaimOwnerOrManager = false;
+
+                            if(claim.getOwnerName().equals(player.getName())) //Is claim owner?
+                            {
+                                solicitorIsClaimOwnerOrManager = true;
+                            }
+                            else
+                            {
+                                for (String manager : claim.managers)
+                                {
+                                    if(manager.equals(playerUUID)) //Is claim manager?
+                                    {
+                                        solicitorIsClaimOwnerOrManager = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if(!solicitorIsClaimOwnerOrManager)
+                            {
+                                player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("NotClaimOwnerOrManager")));
+                                return;
+                            }
+
                             if(!mainClassAccess.getConfig().getBoolean("SendToSpawnInstead"))
                             {
                                 //Expel through "expanding iterating circumferences" method

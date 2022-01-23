@@ -45,8 +45,32 @@ public class CommandKickFromClaim implements CommandExecutor {
                         final DataStore dataStore = GriefPrevention.instance.dataStore;
                         Location playerToExpelLocation = expelledPlayer.getLocation();
                         Claim claim = dataStore.getClaimAt(playerToExpelLocation, true, null);
-                        if(claim != null && claim.ownerID.equals(player.getUniqueId())) //Target is in a claim + claim is solicitor's
+                        if(claim != null) //Target is in a claim
                         {
+                            boolean solicitorIsClaimOwnerOrManager = false;
+
+                            if(claim.getOwnerName().equals(player.getName())) //Is claim owner?
+                            {
+                                solicitorIsClaimOwnerOrManager = true;
+                            }
+                            else
+                            {
+                                for (String manager : claim.managers)
+                                {
+                                    if(manager.equals(playerUUID)) //Is claim manager?
+                                    {
+                                        solicitorIsClaimOwnerOrManager = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if(!solicitorIsClaimOwnerOrManager)
+                            {
+                                player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("NotClaimOwnerOrManager")));
+                                return false;
+                            }
+
                             if(!mainClassAccess.getConfig().getBoolean("SendToSpawnInstead"))
                             {
                                 //Expel through "expanding iterating circumferences" method

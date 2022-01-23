@@ -27,6 +27,7 @@ class LocaleManager {
         localeConfiguration.addDefault("PlayerNotInYourClaim","&4El/la jugador/a especificado no se encuentra en ninguno de tus claims.");
         localeConfiguration.addDefault("PlayerOffline","&4El/la jugador/a especificado no está conectad@.");
 
+        localeConfiguration.addDefault("NotClaimOwnerOrManager","&4No puedes expulsar a est@ jugador/a, porque no eres dueñ@ o manager del claim en el que está.");
         localeConfiguration.addDefault("SuccessfulKick","&aEl/la jugador/a especificado ha sido expulsad@ de tu/s claim/s. Utiliza &e/setclaimflag noenterplayer <nombreDeJugador/a> &asi no quieres que vuelva a entrar.");
         localeConfiguration.addDefault("Kicked","&4Has sido expulsad@ de un claim de {Expulsor}");
 
