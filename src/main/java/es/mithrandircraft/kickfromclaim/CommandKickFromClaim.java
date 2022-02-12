@@ -4,6 +4,9 @@
 
 package es.mithrandircraft.kickfromclaim;
 
+import com.griefdefender.api.Core;
+import com.griefdefender.api.GriefDefender;
+import com.griefdefender.api.claim.Claim;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -11,13 +14,9 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
-import me.ryanhamshire.GriefPrevention.Claim;
-import me.ryanhamshire.GriefPrevention.DataStore;
-import me.ryanhamshire.GriefPrevention.GriefPrevention;
-
 import org.bukkit.entity.*;
 
-import java.util.List;
+import java.util.UUID;
 
 public class CommandKickFromClaim implements CommandExecutor {
 
@@ -31,20 +30,22 @@ public class CommandKickFromClaim implements CommandExecutor {
         if (sender instanceof Player) //Is player
         {
             Player player = (Player) sender; //Soliciting player
-            String playerUUID = player.getUniqueId().toString();
+            UUID playerUUID = player.getUniqueId();
+            String playerUUIDString = playerUUID.toString();
 
-            if(!mainClassAccess.HasCooldown(playerUUID))
+            if(!mainClassAccess.HasCooldown(playerUUIDString))
             {
                 if(args.length == 1) //Kick specified player
                 {
-                    mainClassAccess.AddCooldown(playerUUID);
+                    mainClassAccess.AddCooldown(playerUUIDString);
 
                     Player expelledPlayer = Bukkit.getPlayer(args[0]); //Target player to be expelled
                     if(expelledPlayer != null && !expelledPlayer.hasPermission("ClaimKick.Exempt"))
                     {
-                        final DataStore dataStore = GriefPrevention.instance.dataStore;
-                        Location playerToExpelLocation = expelledPlayer.getLocation();
-                        Claim claim = dataStore.getClaimAt(playerToExpelLocation, true, null);
+                        final Location playerToExpelLocation = expelledPlayer.getLocation();
+                        final Core griefDefenderCore = GriefDefender.getCore();
+                        final Claim claim = griefDefenderCore.getClaimAt(playerToExpelLocation);
+
                         if(claim != null) //Target is in a claim
                         {
                             boolean solicitorIsClaimOwnerOrManager = false;
@@ -55,9 +56,9 @@ public class CommandKickFromClaim implements CommandExecutor {
                             }
                             else
                             {
-                                for (String manager : claim.managers)
+                                for (UUID trustee : claim.getUserTrusts())
                                 {
-                                    if(manager.equals(playerUUID)) //Is claim manager?
+                                    if(trustee.equals(playerUUID)) //Is kick attempter trusted in claim?
                                     {
                                         solicitorIsClaimOwnerOrManager = true;
                                         break;
@@ -74,7 +75,7 @@ public class CommandKickFromClaim implements CommandExecutor {
                             if(!mainClassAccess.getConfig().getBoolean("SendToSpawnInstead"))
                             {
                                 //Expel through "expanding iterating circumferences" method
-                                Bukkit.getScheduler().runTaskAsynchronously(mainClassAccess, () -> LocationFinder.IterateCircumferences(mainClassAccess, dataStore, player.getLocation(), claim.getGreaterBoundaryCorner().getWorld(), new CallbackReturnLocation()
+                                Bukkit.getScheduler().runTaskAsynchronously(mainClassAccess, () -> LocationFinder.IterateCircumferences(mainClassAccess, griefDefenderCore, player.getLocation(), claim.getWorldUniqueId(), new CallbackReturnLocation()
                                 {
                                     @Override
                                     public void onDone(Location randomCircumferenceRadiusLoc){
@@ -106,14 +107,14 @@ public class CommandKickFromClaim implements CommandExecutor {
                 }
                 else if(args.length == 0) //Toggle interact kick mode
                 {
-                    if(mainClassAccess.CheckPlayerInInteractKickMode(playerUUID))
+                    if(mainClassAccess.CheckPlayerInInteractKickMode(playerUUIDString))
                     {
-                        mainClassAccess.RemovePlayerFromInteractKickMode(playerUUID);
+                        mainClassAccess.RemovePlayerFromInteractKickMode(playerUUIDString);
                         player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("ExitedInteractKickMode")));
                     }
                     else
                     {
-                        mainClassAccess.SetPlayerInInteractKickMode(playerUUID);
+                        mainClassAccess.SetPlayerInInteractKickMode(playerUUIDString);
                         player.sendMessage(ChatColor.translateAlternateColorCodes('&', LocaleManager.get().getString("MessagesPrefix") + LocaleManager.get().getString("EnteredInteractKickMode")));
                     }
                 }

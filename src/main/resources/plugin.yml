@@ -3,7 +3,7 @@ version: '${project.version}'
 main: es.mithrandircraft.kickfromclaim.KickFromClaim
 api-version: 1.17
 authors: [ __Mithrandir__ ]
-depend: [GriefPrevention]
+depend: [GriefDefender]
 description: Kicks players and pets from GriefPrevention claims
 website: www.mithrandircraft.es
 commands:

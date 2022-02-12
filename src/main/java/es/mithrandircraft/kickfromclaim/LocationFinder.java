@@ -1,15 +1,18 @@
 package es.mithrandircraft.kickfromclaim;
 
-import me.ryanhamshire.GriefPrevention.DataStore;
+import com.griefdefender.api.Core;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 
+import java.util.UUID;
+
 public class LocationFinder {
     /**[Run asynchronously] Callback returns "safe" location outside a claim if found, if not found returns null (Uses expanding iterating circumferences method)*/
-    public static void IterateCircumferences(KickFromClaim mainClassAccess, DataStore dataStore, Location circumferenceCenter, World circumferenceWorld, CallbackReturnLocation callback)
+    public static void IterateCircumferences(KickFromClaim mainClassAccess, Core griefDefenderCore, Location circumferenceCenter, UUID circumferenceWorldUUID, CallbackReturnLocation callback)
     {
+        World circumferenceWorld = Bukkit.getWorld(circumferenceWorldUUID);
         int circumferenceRadius = 10;
         Location randomCircumferenceRadiusLoc = null;
         int maxCircleIterations = mainClassAccess.getConfig().getInt("MaxCircleIterations");
@@ -23,7 +26,7 @@ public class LocationFinder {
             for(int j = 0; j < checkLocationsPerCircumference; j++) //Circumference position + check within claim
             {
                 randomCircumferenceRadiusLoc = GetRandomCircumferenceLoc(circumferenceCenter, circumferenceRadius, circumferenceWorld);
-                if(dataStore.getClaimAt(randomCircumferenceRadiusLoc, true, null) == null)
+                if(griefDefenderCore.getClaimAt(randomCircumferenceRadiusLoc) == null)
                 {
                     safeLocationChecks++;
                     Block highestBlock = circumferenceWorld.getHighestBlockAt(randomCircumferenceRadiusLoc);

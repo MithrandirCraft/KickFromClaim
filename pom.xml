@@ -6,7 +6,7 @@
 
     <groupId>es.mithrandircraft.kickfromclaim</groupId>
     <artifactId>KickFromClaim</artifactId>
-    <version>1.1</version>
+    <version>2.1</version>
     <packaging>jar</packaging>
 
     <name>KickFromClaim</name>
@@ -41,6 +41,20 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <relocations>
+                                <relocation>
+                                    <pattern>net.kyori.event</pattern>
+                                    <shadedPattern>com.griefdefender.lib.kyori.event</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>net.kyori.adventure.text</pattern>
+                                    <shadedPattern>com.griefdefender.lib.kyori.adventure.text</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.flowpowered</pattern>
+                                    <shadedPattern>com.griefdefender.lib.flowpowered</shadedPattern>
+                                </relocation>
+                            </relocations>
                         </configuration>
                     </execution>
                 </executions>
@@ -67,6 +81,10 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+        <repository>
+            <id>glaremasters</id>
+            <url>https://repo.glaremasters.me/repository/bloodshot/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -80,6 +98,12 @@
             <groupId>com.github.TechFortress</groupId>
             <artifactId>GriefPrevention</artifactId>
             <version>16.17.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.griefdefender</groupId>
+            <artifactId>api</artifactId>
+            <version>2.0.0-20211109.003051-10</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

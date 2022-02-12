@@ -1,8 +1,8 @@
 package es.mithrandircraft.kickfromclaim;
 
-import me.ryanhamshire.GriefPrevention.Claim;
-import me.ryanhamshire.GriefPrevention.DataStore;
-import me.ryanhamshire.GriefPrevention.GriefPrevention;
+import com.griefdefender.api.Core;
+import com.griefdefender.api.GriefDefender;
+import com.griefdefender.api.claim.Claim;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -11,6 +11,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.EquipmentSlot;
+
+import java.util.UUID;
 
 public class EventPlayerInteractEntity implements Listener {
 
@@ -24,38 +26,40 @@ public class EventPlayerInteractEntity implements Listener {
         if(!e.getHand().equals(EquipmentSlot.HAND)) return;
 
         Player player = e.getPlayer();
-        String playerUUID = player.getUniqueId().toString();
+        UUID playerUUID = player.getUniqueId();
+        String playerUUIDString = playerUUID.toString();
 
-        if(mainClassAccess.CheckPlayerInInteractKickMode(playerUUID))
+        if(mainClassAccess.CheckPlayerInInteractKickMode(playerUUIDString))
         {
-            if(!mainClassAccess.HasCooldown(playerUUID))
+            if(!mainClassAccess.HasCooldown(playerUUIDString))
             {
-                mainClassAccess.AddCooldown(playerUUID);
+                mainClassAccess.AddCooldown(playerUUIDString);
                 Entity entity = e.getRightClicked();
 
                 if(entity instanceof LivingEntity)
                 {
-                    final DataStore dataStore = GriefPrevention.instance.dataStore;
                     if(entity instanceof Player) //Attempting to kick a player
                     {
                         Player expelledPlayer = (Player)entity; //Target player to be expelled
                         if(expelledPlayer.hasPermission("ClaimKick.Exempt")) return;
 
-                        Location playerToExpelLocation = expelledPlayer.getLocation();
-                        Claim claim = dataStore.getClaimAt(playerToExpelLocation, true, null);
+                        final Location playerToExpelLocation = expelledPlayer.getLocation();
+                        final Core griefDefenderCore = GriefDefender.getCore();
+                        final Claim claim = griefDefenderCore.getClaimAt(playerToExpelLocation);
+
                         if(claim != null) //Target is in a claim
                         {
                             boolean solicitorIsClaimOwnerOrManager = false;
 
-                            if(claim.getOwnerName().equals(player.getName())) //Is claim owner?
+                            if(claim.getOwnerName().equals(player.getName())) //Is kick attempter the claim owner?
                             {
                                 solicitorIsClaimOwnerOrManager = true;
                             }
                             else
                             {
-                                for (String manager : claim.managers)
+                                for (UUID trustee : claim.getUserTrusts())
                                 {
-                                    if(manager.equals(playerUUID)) //Is claim manager?
+                                    if(trustee.equals(playerUUID)) //Is kick attempter trusted in claim?
                                     {
                                         solicitorIsClaimOwnerOrManager = true;
                                         break;
@@ -72,7 +76,7 @@ public class EventPlayerInteractEntity implements Listener {
                             if(!mainClassAccess.getConfig().getBoolean("SendToSpawnInstead"))
                             {
                                 //Expel through "expanding iterating circumferences" method
-                                Bukkit.getScheduler().runTaskAsynchronously(mainClassAccess, () -> LocationFinder.IterateCircumferences(mainClassAccess, dataStore, player.getLocation(), claim.getGreaterBoundaryCorner().getWorld(), new CallbackReturnLocation()
+                                Bukkit.getScheduler().runTaskAsynchronously(mainClassAccess, () -> LocationFinder.IterateCircumferences(mainClassAccess, griefDefenderCore, player.getLocation(), claim.getWorldUniqueId(), new CallbackReturnLocation()
                                 {
                                     @Override
                                     public void onDone(Location randomCircumferenceRadiusLoc){
@@ -104,11 +108,13 @@ public class EventPlayerInteractEntity implements Listener {
                     else //Attempting to kick a mob or animal
                     {
                         Location animalOrMobToExpellLocation = entity.getLocation();
-                        Claim claim = dataStore.getClaimAt(animalOrMobToExpellLocation, true, null);
-                        if(claim != null && claim.ownerID.equals(player.getUniqueId())) //Target is in a claim + claim is solicitor's
+                        final Core griefDefenderCore = GriefDefender.getCore();
+                        final Claim claim = griefDefenderCore.getClaimAt(animalOrMobToExpellLocation);
+
+                        if(claim != null && claim.getOwnerName().equals(player.getName())) //Target is in a claim + claim is solicitor's
                         {
                             //Expel through "expanding iterating circumferences" method
-                            Bukkit.getScheduler().runTaskAsynchronously(mainClassAccess, () -> LocationFinder.IterateCircumferences(mainClassAccess, dataStore, player.getLocation(), claim.getGreaterBoundaryCorner().getWorld(), new CallbackReturnLocation()
+                            Bukkit.getScheduler().runTaskAsynchronously(mainClassAccess, () -> LocationFinder.IterateCircumferences(mainClassAccess, griefDefenderCore, player.getLocation(), claim.getWorldUniqueId(), new CallbackReturnLocation()
                             {
                                 @Override
                                 public void onDone(Location randomCircumferenceRadiusLoc){
